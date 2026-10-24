@@ -1,8 +1,8 @@
 # ⚡ Distributed Background Job Queue System (Backend)
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-Render_Cloud-brightgreen?style=for-the-badge&logo=render)](https://redis-job-queue-backend-hmsw.onrender.com/api-docs)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Render_Cloud-brightgreen?style=for-the-badge&logo=render)](https://redis-job-queue-backend1.onrender.com/api-docs)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/poojasahuu2006-design/redis-job-queue-backend-)
-[![Swagger UI](https://img.shields.io/badge/API_Docs-OpenAPI_3.0-85EA2D?style=for-the-badge&logo=swagger)](https://redis-job-queue-backend-hmsw.onrender.com/api-docs)
+[![Swagger UI](https://img.shields.io/badge/API_Docs-OpenAPI_3.0-85EA2D?style=for-the-badge&logo=swagger)](https://redis-job-queue-backend1.onrender.com/api-docs)
 [![Node.js](https://img.shields.io/badge/Backend-Node.js_20-339933?style=for-the-badge&logo=node.js)](https://nodejs.org)
 [![MongoDB Atlas](https://img.shields.io/badge/Database-MongoDB_Atlas-47A248?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/atlas)
 [![Redis](https://img.shields.io/badge/Cache-Redis-DC382D?style=for-the-badge&logo=redis)](https://redis.io)
@@ -15,19 +15,19 @@ A robust, enterprise-grade asynchronous background job queuing and worker proces
 
 Experience the live API and test queue processing in real-time directly from your browser:
 
-[![Launch Live Demo](https://img.shields.io/badge/🔗_Launch_Live_Demo-Swagger_UI-00C853?style=for-the-badge&logo=swagger&logoColor=white)](https://redis-job-queue-backend-hmsw.onrender.com/api-docs)
+[![Launch Live Demo](https://img.shields.io/badge/🔗_Launch_Live_Demo-Swagger_UI-00C853?style=for-the-badge&logo=swagger&logoColor=white)](https://redis-job-queue-backend1.onrender.com/api-docs)
 
 | Resource | URL | Status |
 |---|---|---|
-| 🌐 **Live Demo (Interactive Swagger UI)** | [https://redis-job-queue-backend-hmsw.onrender.com/api-docs](https://redis-job-queue-backend-hmsw.onrender.com/api-docs) | ![Online](https://img.shields.io/badge/Status-Online-brightgreen) |
-| 🚀 **API Base URL** | [https://redis-job-queue-backend-hmsw.onrender.com](https://redis-job-queue-backend-hmsw.onrender.com) | ![Online](https://img.shields.io/badge/Status-Online-brightgreen) |
-| 🩺 **System Health Check** | [https://redis-job-queue-backend-hmsw.onrender.com/health](https://redis-job-queue-backend-hmsw.onrender.com/health) | ![Healthy](https://img.shields.io/badge/Health-200_OK-brightgreen) |
+| 🌐 **Live Demo (Interactive Swagger UI)** | [https://redis-job-queue-backend1.onrender.com/api-docs](https://redis-job-queue-backend1.onrender.com/api-docs) | ![Online](https://img.shields.io/badge/Status-Online-brightgreen) |
+| 🚀 **API Base URL** | [https://redis-job-queue-backend1.onrender.com](https://redis-job-queue-backend1.onrender.com) | ![Online](https://img.shields.io/badge/Status-Online-brightgreen) |
+| 🩺 **System Health Check** | [https://redis-job-queue-backend1.onrender.com/health](https://redis-job-queue-backend1.onrender.com/health) | ![Healthy](https://img.shields.io/badge/Health-200_OK-brightgreen) |
 
 ---
 
 ## 🧪 30-Second Live Demo Walkthrough
 
-1. **Launch the Live Demo:** Open [**Swagger UI**](https://redis-job-queue-backend-hmsw.onrender.com/api-docs).
+1. **Launch the Live Demo:** Open [**Swagger UI**](https://redis-job-queue-backend1.onrender.com/api-docs).
 2. **Create a Job:** Scroll to `POST /api/jobs` → Click **Try it out** → Execute with:
    ```json
    {
