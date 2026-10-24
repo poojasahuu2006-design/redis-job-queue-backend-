@@ -1,0 +1,371 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Redis & MongoDB Distributed Job Queue API",
+    "version": "1.0.0",
+    "description": "Production-ready distributed background job queue system with worker lease locking, automatic retries with exponential backoff, dead-letter queue (DLQ), and dependency graph resolution."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Current Server (Local or Production)"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "System Health Check",
+        "description": "Returns uptime and status for Render monitoring.",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "service": {
+                      "type": "string",
+                      "example": "Redis Job Queue Backend"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs": {
+      "post": {
+        "summary": "Enqueue a new background job",
+        "description": "Creates and queues a new asynchronous task with optional priority, delay, max retries, and job dependencies.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "payload"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "example": "SEND_EMAIL_NOTIFICATION",
+                    "description": "Job type identifier"
+                  },
+                  "payload": {
+                    "type": "object",
+                    "example": {
+                      "to": "user@example.com",
+                      "template": "welcome_digest",
+                      "userId": "12345"
+                    },
+                    "description": "Data required for the worker to process the job"
+                  },
+                  "priority": {
+                    "type": "integer",
+                    "default": 3,
+                    "example": 5,
+                    "description": "Priority level (higher numbers processed first)"
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "default": 5,
+                    "example": 3,
+                    "description": "Maximum retry attempts before moving to Dead Letter Queue"
+                  },
+                  "scheduledAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2026-10-24T19:30:00.000Z",
+                    "description": "Schedule job for future execution (delay)"
+                  },
+                  "dependsOn": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": [],
+                    "description": "List of parent Job IDs that must complete before this job runs"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Job enqueued successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Job created successfully"
+                    },
+                    "job": {
+                      "$ref": "#/components/schemas/Job"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      },
+      "get": {
+        "summary": "List all jobs",
+        "description": "Retrieves all jobs with their current lifecycle status, retry counts, and worker execution logs.",
+        "responses": {
+          "200": {
+            "description": "List of jobs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 4
+                    },
+                    "jobs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Job"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/queueStatus": {
+      "get": {
+        "summary": "Inspect queue statistics & Dead Letter Queue (DLQ)",
+        "description": "Real-time breakdown of queue health: pending, processing (in-flight), completed, failed, and dead jobs.",
+        "responses": {
+          "200": {
+            "description": "Queue metrics and recent dead-letter items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "stats": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "integer",
+                          "example": 2
+                        },
+                        "processing": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "dead": {
+                          "type": "integer",
+                          "example": 0
+                        },
+                        "completed": {
+                          "type": "integer",
+                          "example": 15
+                        },
+                        "failed": {
+                          "type": "integer",
+                          "example": 1
+                        }
+                      }
+                    },
+                    "deadLetterContents": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Job"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{id}": {
+      "get": {
+        "summary": "Get job details by ID",
+        "description": "Fetches complete job state including attempts, completed steps, lock expiration, and dependencies.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "MongoDB Job ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "job": {
+                      "$ref": "#/components/schemas/Job"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel and remove a job",
+        "description": "Deletes a job from the queue.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "MongoDB Job ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job deleted successfully"
+          },
+          "404": {
+            "description": "Job not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Job": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "667d8f99e3a9b1c2d3e4f5a6"
+          },
+          "type": {
+            "type": "string",
+            "example": "SEND_EMAIL_NOTIFICATION"
+          },
+          "payload": {
+            "type": "object"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "completed",
+              "failed",
+              "dead"
+            ],
+            "example": "completed"
+          },
+          "priority": {
+            "type": "integer",
+            "example": 3
+          },
+          "attempts": {
+            "type": "integer",
+            "example": 1
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "example": 5
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lockedBy": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "lockedUntil": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "completedSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "step1",
+              "step2"
+            ]
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": []
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}

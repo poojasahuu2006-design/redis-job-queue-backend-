@@ -1,68 +1,106 @@
-# Reliable Job Queue with Dead-Letter Recovery
+# ⚡ Distributed Background Job Queue System (Backend)
 
-A robust, highly available background job processing engine built with Node.js, Express, and MongoDB. This engine is designed to handle complex background tasks with maximum reliability, ensuring that jobs survive server crashes and execute in the correct order.
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Render_Cloud-brightgreen?style=for-the-badge&logo=render)](https://redis-job-queue-backend-hmsw.onrender.com/api-docs)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/poojasahuu2006-design/redis-job-queue-backend-)
+[![Swagger UI](https://img.shields.io/badge/API_Docs-OpenAPI_3.0-85EA2D?style=for-the-badge&logo=swagger)](https://redis-job-queue-backend-hmsw.onrender.com/api-docs)
+[![Node.js](https://img.shields.io/badge/Backend-Node.js_20-339933?style=for-the-badge&logo=node.js)](https://nodejs.org)
+[![MongoDB Atlas](https://img.shields.io/badge/Database-MongoDB_Atlas-47A248?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/atlas)
+[![Redis](https://img.shields.io/badge/Cache-Redis-DC382D?style=for-the-badge&logo=redis)](https://redis.io)
 
-## Core Features
+A robust, enterprise-grade asynchronous background job queuing and worker processing engine built with **Node.js**, **Express.js**, **MongoDB Atlas**, and **Redis**. Designed to handle high-concurrency tasks, background scheduling, job dependencies (DAGs), transient error retries, and dead-letter queues.
 
-- **Durable Queue**: Backed by MongoDB to ensure jobs survive application crashes.
-- **Lease Pattern (Visibility Timeout)**: Guarantees exactly-once processing by locking jobs. If a worker crashes mid-job, the lock expires and another worker safely takes over.
-- **Priority & Scheduled Execution**: Processes jobs based on priority weight and future scheduled timestamps.
-- **Exponential Backoff**: Automatically retries failed jobs with increasing delays (2s, 4s, 8s...) to allow external dependencies time to recover.
-- **Dead-Letter Queue (DLQ)**: Jobs that exceed max retries are moved to a DLQ for developer inspection.
-- **Idempotency**: Safely resumes partially completed jobs without duplicating side-effects (e.g., charging a credit card twice).
-- **Job Dependencies**: Supports complex pipelines where Job B will automatically wait in the queue until Job A has successfully completed.
+---
 
-## Technologies Used
-- Node.js
-- Express.js
-- MongoDB & Mongoose
-- UUID (for worker identification)
+## 🚀 Live Demo & Interactive Swagger UI
 
-## Setup & Installation
+Experience the live API and test queue processing in real-time directly from your browser:
 
-1. Install dependencies:
-   ```bash
-   npm install
+[![Launch Live Demo](https://img.shields.io/badge/🔗_Launch_Live_Demo-Swagger_UI-00C853?style=for-the-badge&logo=swagger&logoColor=white)](https://redis-job-queue-backend-hmsw.onrender.com/api-docs)
+
+| Resource | URL | Status |
+|---|---|---|
+| 🌐 **Live Demo (Interactive Swagger UI)** | [https://redis-job-queue-backend-hmsw.onrender.com/api-docs](https://redis-job-queue-backend-hmsw.onrender.com/api-docs) | ![Online](https://img.shields.io/badge/Status-Online-brightgreen) |
+| 🚀 **API Base URL** | [https://redis-job-queue-backend-hmsw.onrender.com](https://redis-job-queue-backend-hmsw.onrender.com) | ![Online](https://img.shields.io/badge/Status-Online-brightgreen) |
+| 🩺 **System Health Check** | [https://redis-job-queue-backend-hmsw.onrender.com/health](https://redis-job-queue-backend-hmsw.onrender.com/health) | ![Healthy](https://img.shields.io/badge/Health-200_OK-brightgreen) |
+
+---
+
+## 🧪 30-Second Live Demo Walkthrough
+
+1. **Launch the Live Demo:** Open [**Swagger UI**](https://redis-job-queue-backend-hmsw.onrender.com/api-docs).
+2. **Create a Job:** Scroll to `POST /api/jobs` → Click **Try it out** → Execute with:
+   ```json
+   {
+     "type": "IMAGE_COMPRESSION_TASK",
+     "payload": { "filename": "banner.png", "targetSize": "500kb" },
+     "priority": 5,
+     "maxAttempts": 3
+   }
    ```
-2. Configure your environment variables in a `.env` file (MongoDB URI, etc).
-3. Start the server (which also starts the background worker):
-   ```bash
-   npm run dev
-   ```
+3. **Watch the Worker Process:** The worker claims the job using a lease lock, runs step 1 and step 2 idempotently, and marks it `completed`.
+4. **Inspect Queue Statistics:** Execute `GET /api/jobs/queueStatus` to see live counts of `pending`, `processing`, `completed`, and `dead` letter items!
 
-## API Reference
+---
 
-### 1. Create a Job
-**Endpoint:** `POST /api/jobs/`
+## ⚙️ Core Architectural Pillars
 
-**Request Body:**
-```json
-{
-  "type": "send_welcome_email",
-  "payload": {
-    "userId": "12345",
-    "email": "test@example.com",
-    "fail_once": true 
-  },
-  "priority": 10,
-  "dependsOn": [] 
-}
+- **Durable Job Queue & Worker Lease Pattern:** Workers lock claimed tasks using `lockedUntil` time-leases, mathematically preventing race conditions and duplicate processing across concurrent workers.
+- **Priority-Based Scheduling:** Jobs with higher priority scores are claimed and executed first.
+- **Exponential Backoff Retries:** Failed jobs are automatically retried using exponential backoff ($2^{\text{attempt}}$ seconds) to prevent cascading failures.
+- **Dead-Letter Queue (DLQ):** Tasks that exceed `maxAttempts` are moved to a Dead-Letter Queue for analysis and alerting.
+- **Step-Level Idempotency:** If a worker crashes midway, subsequent workers resume only the uncompleted steps without repeating prior work.
+- **Job Dependency Graph (DAG):** Jobs can declare `dependsOn: [parentId]` so downstream jobs only execute after prerequisite tasks finish successfully.
+
+---
+
+## 📡 API Endpoints Reference
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/jobs` | Enqueue a new task with payload, priority, and retries |
+| `GET` | `/api/jobs` | List all jobs with their lifecycle statuses and attempt history |
+| `GET` | `/api/jobs/queueStatus` | Inspect queue statistics & Dead Letter Queue (DLQ) |
+| `GET` | `/api/jobs/:id` | Fetch details and completed execution steps of a specific job |
+| `DELETE` | `/api/jobs/:id` | Cancel and purge a job from the queue |
+| `GET` | `/health` | Service health check |
+
+---
+
+## 💻 Local Setup & Installation
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/poojasahuu2006-design/redis-job-queue-backend-.git
+cd redis-job-queue-backend-
 ```
-*Note: Passing `fail_once: true` in the payload will force the worker to simulate a crash on the first attempt to demonstrate exponential backoff.*
 
-### 2. Inspect Queue Status
-**Endpoint:** `GET /api/jobs/queueStatus`
+### 2. Install dependencies
+```bash
+npm install
+```
 
-Returns the real-time counts of pending, processing, completed, and dead jobs, alongside the most recent dead-letter logs.
+### 3. Environment Variables
+Create a `.env` file in the root directory:
+```env
+PORT=3000
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.kpjsxdz.mongodb.net/job_queue?retryWrites=true&w=majority
+# Optional Redis:
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
 
-### 3. Get All Jobs
-**Endpoint:** `GET /api/jobs/`
+### 4. Run the Server & Worker
+```bash
+# Development mode
+npm run dev
 
-### 4. Get Job By ID
-**Endpoint:** `GET /api/jobs/:id`
+# Production mode
+npm start
+```
 
-### 5. Delete Job By ID
-**Endpoint:** `DELETE /api/jobs/:id`
+Swagger docs available locally at: `http://localhost:3000/api-docs`
 
-## Architecture: How the Worker Functions
-When the server starts, a `workerId` is generated using UUID. The worker enters an infinite polling loop. It uses MongoDB's `findOneAndUpdate` to atomically search for the highest priority job that is due to run, and immediately sets `lockedBy` to its `workerId` and `lockedUntil` to 5 minutes in the future. If a dependency check fails, the job is unlocked and delayed. If an error is thrown during processing, the worker increments the attempt counter and sets the next `scheduledAt` time using exponential backoff logic.
+---
+
+## 👤 Author
+- **Pooja Sahu** — [GitHub Profile](https://github.com/poojasahuu2006-design)
