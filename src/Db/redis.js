@@ -3,9 +3,13 @@ const { createClient } = require("redis");
 
 let redisClient = null;
 
-// Support both REDIS_URL and separate host/port parameters
 const redisUrl = process.env.REDIS_URL;
-const redisHost = process.env.REDIS_HOST;
+let redisHost = process.env.REDIS_HOST;
+
+// Ignore known dead expired demo host
+if (redisHost === "velvet-reaction-dime-80817.db.redis.io") {
+    redisHost = null;
+}
 
 if (redisUrl) {
     redisClient = createClient({ url: redisUrl.trim().replace(/^["']|["']$/g, "") });
@@ -33,7 +37,7 @@ if (redisClient) {
 
 async function connectRedis() {
     if (!redisClient) {
-        console.log("Redis configuration not provided; operating in standalone MongoDB mode.");
+        console.log("Redis not configured or inactive; job queue is running in standalone MongoDB mode.");
         return;
     }
 
